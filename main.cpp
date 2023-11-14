@@ -1,16 +1,18 @@
 #include "GameManager.h"
 #include "Globals.h"
 #include "PersonManager.h"
+#include <chrono>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
-#include <fstream>
 #include <tgbot/tgbot.h>
 
 #define NO_PROCESS 0
 
 TgBot::Bot bot("6653170160:AAHoOvyhZw10GihbNrjKfvq7LXPwGXPEzqU");
-//TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
+// TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
 PersonManager person_manager(bot);
 GameManager game_manager(bot);
 
@@ -22,36 +24,42 @@ void end(int s) {
 }
 
 void log(TgBot::Message::Ptr const& message) {
+  auto now = time(original_t{});
+  char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+  std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s/%s/%s/%li : %s\n", message->chat->title.c_str(), message->from->firstName.c_str(),
+    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, message->chat->title.c_str(), message->from->firstName.c_str(),
            message->from->username.c_str(), message->from->id, message->text.c_str());
   }
   else {
-    printf("PRIVATE/%s/%s/%li : %s\n", message->from->firstName.c_str(), message->from->username.c_str(), message->from->id,
-           message->text.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, message->from->firstName.c_str(), message->from->username.c_str(),
+           message->from->id, message->text.c_str());
   }
 }
 
 void log(TgBot::CallbackQuery::Ptr const& query) {
+  auto now = time(original_t{});
+  char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+  std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (query->message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s/%s/%s/%li : %s\n", query->message->chat->title.c_str(), query->from->firstName.c_str(),
+    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, query->message->chat->title.c_str(), query->from->firstName.c_str(),
            query->from->username.c_str(), query->from->id, query->data.c_str());
   }
   else {
-    printf("PRIVATE/%s/%s/%li : %s\n", query->from->firstName.c_str(), query->from->username.c_str(), query->from->id,
-           query->data.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, query->from->firstName.c_str(), query->from->username.c_str(),
+           query->from->id, query->data.c_str());
   }
 }
 
 void getBalance(TgBot::Message::Ptr const& message) {
   if (message->replyToMessage != nullptr && !(message->replyToMessage->from->isBot)) {
-    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SpyBalance, message->from->id,
-                                                       message->chat->id, message->replyToMessage->messageId, -1,
+    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SpyBalance, message->from->id, message->chat->id,
+                                                       message->replyToMessage->messageId, -1,
                                                        message->replyToMessage->from->id));
   }
   else {
-    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetBalance, message->from->id,
-                                                       message->chat->id, message->messageId));
+    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetBalance, message->from->id, message->chat->id,
+                                                       message->messageId));
   }
 }
 
@@ -257,7 +265,7 @@ void writePid() {
 }
 
 int main() {
-//  writePid();
+  //  writePid();
   bot.getApi().sendMessage(406004592, "restart");
 
   addEventHandlers();
