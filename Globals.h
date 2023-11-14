@@ -9,7 +9,16 @@
 #include <iostream>
 #include <tgbot/tgbot.h>
 
+using uchar = unsigned char;
+
 extern std::mutex tgbot_mutex;
+
+inline constexpr int64_t MINIMUM_BIT = 20;
+inline constexpr int64_t FARM_AMOUNT = MINIMUM_BIT * 3;
+inline constexpr int DEFAULT_BOTS = 3;
+
+// controll number of colors
+inline constexpr uchar MAX_ACTIVE_BITS = 3;
 
 inline constexpr int farm_time = 1800;
 
@@ -36,7 +45,5 @@ std::string intToTime(int value);
 std::string intToCoins(int64_t value);
 
 std::string  getUserName(TgBot::Bot& bot, int64_t chat_id, int64_t user_id) noexcept;
-
-using uchar = unsigned char;
 
 #endif // CASINO_GLOBALS_H

@@ -8,31 +8,29 @@
 #include <cstdint>
 #include "Globals.h"
 #include <set>
+#include <unordered_set>
 
 struct Person {
-  static constexpr int64_t MINIMUM_BIT = 20;
-  static constexpr int64_t FARM_AMOUNT = MINIMUM_BIT * 3;
-  static constexpr int DEFAULT_BOTS = 5;
-
   Person() noexcept = default;
-  explicit Person(int64_t balance, int last_f, int64_t bt, int bot_num) noexcept;
+  Person(Person const&) = delete;
+  explicit Person(int64_t balance, int last_f) noexcept;
 
   int64_t get_balance() const noexcept;
   bool shift_balance(int64_t delta) noexcept;
+
   bool can_farm() noexcept;
   void update_farm() noexcept;
   int get_last_farm() const noexcept;
-  int64_t getBit() const noexcept;
-  bool setBit(int64_t val) noexcept;
-  int getBots() const noexcept;
-  bool setBots(int bots) noexcept;
 
-  std::set<int64_t> in_game;
+  bool add_bit() noexcept;
+  bool has_active_bit() const noexcept;
+  void close_bit() noexcept;
 private:
   int64_t balance{FARM_AMOUNT};
-  int64_t own_bit{MINIMUM_BIT};
   int last_farm{0};
-  uchar bot_count{DEFAULT_BOTS};
+  uchar active_bits{0};
+//  int64_t own_bit{MINIMUM_BIT}; // ok
+//  uchar bot_count{DEFAULT_BOTS}; // ok
 };
 
 #endif // CASINO_PERSON_H

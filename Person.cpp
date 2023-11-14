@@ -17,10 +17,9 @@ bool Person::shift_balance(int64_t delta) noexcept {
   return true;
 }
 bool Person::can_farm() noexcept {
-  return time() - last_farm >= farm_time/* && balance < MINIMUM_BIT*/;
+  return time() - last_farm >= farm_time /* && balance < MINIMUM_BIT*/;
 }
-Person::Person(int64_t bal, int last_f, int64_t bt, int bot_num) noexcept
-    : balance(bal), own_bit(bt), last_farm(last_f), bot_count(static_cast<uchar>(bot_num)) {}
+Person::Person(int64_t bal, int last_f) noexcept : balance(bal), last_farm(last_f) {}
 
 int Person::get_last_farm() const noexcept {
   return last_farm;
@@ -30,25 +29,19 @@ void Person::update_farm() noexcept {
     last_farm = time();
   }
 }
-int64_t Person::getBit() const noexcept {
-  return own_bit;
-}
-bool Person::setBit(int64_t val) noexcept {
-  if (val < MINIMUM_BIT) {
-    return false;
-  }
-  own_bit = val;
-  return true;
-}
 
-int Person::getBots() const noexcept {
-  return static_cast<int>(bot_count);
-}
-
-bool Person::setBots(int bots) noexcept {
-  if (bots >= 0 && bots <= max_bots) {
-    bot_count = static_cast<uchar>(bots);
+bool Person::add_bit() noexcept {
+  if (active_bits < MAX_ACTIVE_BITS) {
+    ++active_bits;
     return true;
   }
   return false;
+}
+void Person::close_bit() noexcept {
+  if (active_bits > 0) {
+    --active_bits;
+  }
+}
+bool Person::has_active_bit() const noexcept {
+  return active_bits;
 }

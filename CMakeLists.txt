@@ -40,6 +40,8 @@ add_executable(casino main.cpp
         rand.h
         Names.cpp
         Names.h
+        Chat.cpp
+        Chat.h
 )
 
 target_link_libraries(casino /home/nikita/tgbot-cpp/libTgBot.a ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${CURL_LIBRARIES})
