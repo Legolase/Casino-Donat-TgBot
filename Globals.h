@@ -16,9 +16,10 @@ extern std::mutex tgbot_mutex;
 inline constexpr int64_t MINIMUM_BIT = 20;
 inline constexpr int64_t FARM_AMOUNT = MINIMUM_BIT * 3;
 inline constexpr int DEFAULT_BOTS = 4;
+//inline constexpr int DEFAULT_COLORS = 5;
 
 // controll number of colors
-inline constexpr uchar MAX_ACTIVE_BITS = 3;
+inline constexpr uchar MAX_ACTIVE_BITS = 1;
 
 inline constexpr int farm_time = 1800;
 

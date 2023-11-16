@@ -24,6 +24,7 @@ struct Chat {
 private:
   int64_t bit{MINIMUM_BIT};
   uchar bot_count{DEFAULT_BOTS};
+//  uchar color_count{DEFAULT_COLORS};
 };
 
 #endif // CASINO_CHAT_H

@@ -13,14 +13,16 @@ void PersonManager::start() {
 }
 
 void PersonManager::thread_main() {
-  load_data();
+  load_user_data();
+  load_chat_data();
 
   while (true) {
     auto opt_request = person_stream.pop();
 
     if (!opt_request.has_value()) {
       std::cout << "Exit person_stream\n";
-      save_data();
+      save_user_data();
+      save_chat_data();
       return;
     }
 
@@ -135,11 +137,12 @@ void PersonManager::thread_main() {
                                  false, request.message_id);
       }
     }
-    else if (request.type == PersonRequest::Type::GetBot) {
+    else if (request.type == PersonRequest::Type::GetSettings) {
       std::lock_guard lg(tgbot_mutex);
-      bot.getApi().sendMessage(
-          request.chat_id, std::string("<b>") + SEARCH + "Установлено ботов:</b> " + std::to_string(chat->getBots()) + BOT,
-          false, request.message_id, nullptr, "HTML");
+      bot.getApi().sendMessage(request.chat_id,
+                               std::string("") + SEARCH + "\n<b>Установлено ботов:</b> " + std::to_string(chat->getBots()) +
+                                   BOT + "\n<b>Цена ставок:</b> " + intToCoins(chat->getBit()),
+                               false, request.message_id, nullptr, "HTML");
     }
   }
 }
@@ -151,7 +154,7 @@ PersonManager::~PersonManager() {
   worker.join();
 }
 
-void PersonManager::load_data() {
+void PersonManager::load_user_data() {
   std::ifstream in("data.ini");
   if (!in) {
     std::cout << "Нет данных для загрузки\n";
@@ -168,7 +171,7 @@ void PersonManager::load_data() {
   }
 }
 
-void PersonManager::save_data() {
+void PersonManager::save_user_data() {
   std::ofstream out("data.ini");
   if (!out) {
     std::cout << "Данные потеряны\n";
@@ -176,7 +179,7 @@ void PersonManager::save_data() {
   }
   out << registratedUsers.size() << '\n';
   for (auto const& elem : registratedUsers) {
-    out << elem.first << ' ' << elem.second;
+    out << elem.first << ' ' << elem.second << '\n';
   }
 }
 
@@ -196,14 +199,14 @@ std::map<int64_t, Person>::iterator PersonManager::registUser(int64_t id) {
     SpyBalance,   -
     SetBot,       -
     SetBit,       -
-    GetBot        -
+    GetSettings        -
 */
 Person* PersonManager::getPersonSubject(PersonRequest const& request) {
   decltype(registratedUsers)::iterator user_it;
 
   if (request.type == PersonRequest::Type::GameRegist || request.type == PersonRequest::Type::SpyBalance ||
       request.type == PersonRequest::Type::SetBot || request.type == PersonRequest::Type::SetBit ||
-      request.type == PersonRequest::Type::GetBot)
+      request.type == PersonRequest::Type::GetSettings || request.type == PersonRequest::Type::Exit)
   {
     return &default_person;
   }
@@ -234,7 +237,7 @@ Person* PersonManager::getPersonSubject(PersonRequest const& request) {
     SpyBalance,   user_to   n
     SetBot,       -
     SetBit,       -
-    GetBot        -
+    GetSettings        -
 */
 Person* PersonManager::getPersonObject(const PersonRequest& request) {
   decltype(registratedUsers)::iterator user_it;
@@ -265,14 +268,15 @@ Person* PersonManager::getPersonObject(const PersonRequest& request) {
   ReturnMoney,  chat r
   SpyBalance,   -
   SetBot        chat r
-  SetBit        chat r
+  SetBit,       chat r
+  GetSettings        chat r
 */
 Chat* PersonManager::getChat(const PersonRequest& request) {
   decltype(registratedChats)::iterator chat_it;
 
   if (request.type != PersonRequest::Type::GameRegist && request.type != PersonRequest::Type::ReturnMoney &&
       request.type != PersonRequest::Type::SetBot && request.type != PersonRequest::Type::SetBit &&
-      request.type != PersonRequest::Type::GetBot)
+      request.type != PersonRequest::Type::GetSettings)
   {
     return nullptr;
   }
@@ -287,4 +291,33 @@ Chat* PersonManager::getChat(const PersonRequest& request) {
 std::map<int64_t, Chat>::iterator PersonManager::registChat(int64_t id) {
   auto pr = registratedChats.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
   return pr.first;
+}
+
+void PersonManager::load_chat_data() {
+  std::ifstream in("chats.ini");
+  if (!in) {
+    std::cout << "Нет данных для загрузки\n";
+    return;
+  }
+  int n;
+  in >> n;
+
+  int64_t id;
+  Chat ch;
+  for (int i = 0; i < n; ++i) {
+    in >> id >> ch;
+    registratedChats.emplace(id, ch);
+  }
+}
+
+void PersonManager::save_chat_data() {
+  std::ofstream out("chats.ini");
+  if (!out) {
+    std::cout << "Данные потеряны\n";
+    return;
+  }
+  out << registratedChats.size() << '\n';
+  for (auto const& elem : registratedChats) {
+    out << elem.first << ' ' << elem.second << '\n';
+  }
 }

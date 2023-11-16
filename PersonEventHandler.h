@@ -21,7 +21,8 @@ struct PersonRequest {
     SpyBalance,
     SetBot,
     SetBit,
-    GetBot,
+    GetSettings,
+//    SetColor,
     last
   };
 

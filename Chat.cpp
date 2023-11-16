@@ -5,13 +5,19 @@
 #include "Chat.h"
 
 std::ostream& operator<<(std::ostream& out, const Chat& chat) {
-  out << chat.bit << ' ' << chat.bot_count;
+  out << chat.bit << ' ' << static_cast<int>(chat.bot_count);// << ' ' << static_cast<int>(chat.color_count);
   return out;
 }
+
 std::istream& operator>>(std::istream& in, Chat& chat) {
-  in >> chat.bit >> chat.bot_count;
+  int i;
+  in >> chat.bit >> i;
+  chat.bot_count = static_cast<uchar>(i);
+//  in >> i;
+//  chat.color_count = static_cast<uchar>(i);
   return in;
 }
+
 int64_t Chat::getBit() const noexcept {
   return bit;
 }

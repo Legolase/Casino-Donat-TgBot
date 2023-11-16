@@ -3,7 +3,6 @@
 #include "PersonManager.h"
 #include <chrono>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -12,7 +11,7 @@
 #define NO_PROCESS 0
 
 TgBot::Bot bot("6653170160:AAHoOvyhZw10GihbNrjKfvq7LXPwGXPEzqU");
-// TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
+//TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
 PersonManager person_manager(bot);
 GameManager game_manager(bot);
 
@@ -86,13 +85,12 @@ void addEventHandlers() {
                              std::string("<b>Вот некоторые из моих возможностей:</b>"
                                          "\n  1) /newgame - создать игру"
                                          "\n  2) /balance - узнать свой баланс"
-                                         "\n  3) /bots - кол-во ботов в помощь"
+                                         "\n  3) /settings - настройки игры"
                                          "\n  4) /farm - фарм ") +
                                  COIN +
                                  "\n  5) <code>.bit</code> - задать ставку для ваших игр"
                                  "\n  6) <code>.bot</code> - задать ботов для ваших игр"
-                                 "\n  7) <code>.help</code> - перевести деньги игроку"
-                                 "\n  8) <code>.b</code> - узнать свой баланс",
+                                 "\n  7) <code>.help</code> - перевести деньги игроку",
                              false, 0, nullptr, "HTML");
     log(message);
   });
@@ -142,9 +140,9 @@ void addEventHandlers() {
     }
     log(message);
   });
-  bot.getEvents().onCommand("bots", [&](TgBot::Message::Ptr message) {
+  bot.getEvents().onCommand("settings", [&](TgBot::Message::Ptr message) {
     if (NO_PROCESS) return;
-    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetBot, message->from->id, message->chat->id,
+    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetSettings, message->from->id, message->chat->id,
                                                        message->messageId));
     log(message);
   });
@@ -251,21 +249,14 @@ void addEventHandlers() {
       }
       log(message);
     }
-    else if (StringTools::startsWith(message->text, ".b")) {
-      getBalance(message);
-      log(message);
-    }
+//    else if (StringTools::startsWith(message->text, ".b")) {
+//      getBalance(message);
+//      log(message);
+//    }
   });
 }
 
-void writePid() {
-  std::ofstream out("casino.pid");
-  out << getpid();
-  out.close();
-}
-
 int main() {
-  //  writePid();
   bot.getApi().sendMessage(406004592, "restart");
 
   addEventHandlers();

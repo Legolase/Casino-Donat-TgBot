@@ -25,8 +25,11 @@ public:
   std::map<int64_t, Chat>::iterator registChat(int64_t id);
 
 private:
-  void load_data();
-  void save_data();
+  void load_user_data();
+  void save_user_data();
+
+  void load_chat_data();
+  void save_chat_data();
 
   Person* getPersonSubject(PersonRequest const& request);
   Person* getPersonObject(PersonRequest const& request);

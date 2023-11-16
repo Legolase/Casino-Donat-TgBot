@@ -9,22 +9,23 @@
 #include "rand.h"
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 #include <string>
 
-static void appendToBanner(TgBot::Bot& bot, int64_t char_id, std::string& banner, std::set<int64_t> users,
-                           const char* header, std::string const& win_amount) {
-  banner = banner + header + ' ' + win_amount + "\n";
-
-  // write people winners
-  for (auto id = users.lower_bound(0); id != users.end(); ++id) {
-    banner = banner + "  <b><i>" + getUserName(bot, char_id, *id) + "</i></b>\n";
-  }
-  // write bots winners
-  for (auto user_id = users.begin(); user_id != users.end() && (*user_id < 0); ++user_id) {
-    banner = banner + "  <i><b>" + NAMES[random(0, NAMES_SIZE - 1)] + BOT + "</b></i>\n";
-  }
-  banner += "\n";
-}
+// static void appendToBanner(TgBot::Bot& bot, int64_t chat_id, std::stringstream& banner, std::set<int64_t> users,
+//                            const char* header, std::string const& win_amount) {
+//   banner << header << ' ' << win_amount << "\n";
+//
+//   // write people winners
+//   for (auto id = users.lower_bound(0); id != users.end(); ++id) {
+//     banner << "  <b><i>" << getUserName(bot, chat_id, *id) << "</i></b>\n";
+//   }
+//   // write bots winners
+//   for (auto user_id = users.begin(); user_id != users.end() && (*user_id < 0); ++user_id) {
+//     banner << "  <i><b>" << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</b></i>\n";
+//   }
+//   banner << '\n';
+// }
 
 bool Game::update(TgBot::Bot& bot, int64_t group_id) {
   if (lifetime() < MAX_LIFETIME) {
@@ -46,48 +47,86 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
   }
 
   if (bit_counter > 0) {
-    // bots set bits
     for (int i = bit_counter; i <= bot_in; ++i) {
       addBotBit(bot, static_cast<Color>(random(0, static_cast<int>(Color::last) - 1)));
     }
 
-    // chosing win color
-    std::vector<int> voted_colors;
-    voted_colors.reserve(static_cast<int>(Color::last));
-    for (int i = 0; i < goals.size(); ++i) {
-      if (!goals[i].empty()) {
-        voted_colors.push_back(i);
-      }
+    std::vector<uchar> places(static_cast<int>(Color::last));
+    for (int i = 0; i < places.size(); ++i) {
+      places[i] = i;
     }
-    int winner_color = voted_colors[random(0, voted_colors.size() - 1)];
-    int64_t const win_amount = (own_bit * bit_counter) / goals[winner_color].size();
+    std::sort(places.begin(), places.end(), [&](uchar a, uchar b) { return goals[a].size() > goals[b].size(); });
 
-    // give rewards
-    int64_t temp;
-    for (auto color : voted_colors) {
-      temp = (color == winner_color) ? win_amount : 0;
-      for (auto id = goals[color].lower_bound(0); id != goals[color].end(); ++id) {
-        person_stream.push(
-            std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, *id, group_id, message_id, temp));
-      }
+    while (!places.empty() && goals[places.back()].empty()) {
+      places.pop_back();
     }
 
-    // make banner
+    std::vector<std::vector<uchar>> equal_colors{{places[0]}};
+    for (int i = 1; i < places.size(); ++i) {
+      if (goals[places[i]].size() != goals[equal_colors.back().back()].size()) {
+        equal_colors.emplace_back();
+      }
+      equal_colors.back().push_back(places[i]);
+    }
+    std::stringstream banner_result;
+    banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n\n";
+    int num = 0;
+    char group_stage = -1;
+    int64_t win, group_bits, real_win;
+    double win_percent;
+    for (int i = equal_colors.size() - 1, j = 0; i >= 0; --i, ++j) {
+      if (i != j) {
+        group_bits = equal_colors[i].size() * goals[equal_colors[i][0]].size() +
+                     equal_colors[j].size() * goals[equal_colors[j][0]].size();
+        win_percent = static_cast<double>(goals[equal_colors[j][0]].size()) /
+                      (goals[equal_colors[i][0]].size() + goals[equal_colors[j][0]].size());
+        win = (win_percent * (group_bits * own_bit)) / (equal_colors[i].size() * goals[equal_colors[i][0]].size());
+      }
+      else {
+        win = own_bit;
+      }
+
+      // checking time, when winners get lower win
+      if ((i > j && win < own_bit) || (i < j && win > own_bit)) win = own_bit;
+
+      real_win = win - own_bit;
+      if (group_stage == -1) {
+        group_stage = (real_win > 0) ? 0 : ((real_win == 0) ? 1 : 2);
+        banner_result << str_stage[group_stage] << '\n';
+      }
+      else if (group_stage == 0 && real_win <= 0) {
+        group_stage = (real_win == 0) ? 1 : 2;
+        banner_result << str_stage[group_stage] << '\n';
+      }
+      else if (group_stage < 2 && real_win < 0) {
+        group_stage = 2;
+        banner_result << str_stage[group_stage] << '\n';
+      }
+      std::lock_guard lg(tgbot_mutex);
+      for (auto const& colore : equal_colors[i]) {
+        // show people
+        for (auto user_id = goals[colore].lower_bound(0); user_id != goals[colore].end(); ++user_id) {
+          person_stream.push(
+              std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, *user_id, group_id, message_id, win));
+          banner_result << "  " << ++num << ") " << color_text[colore] << ' ';
+          try {
+            auto user = bot.getApi().getChatMember(group_id, *user_id)->user;
+            banner_result << "<b>@" << user->username << "</b> ";
+          } catch (...) {
+            banner_result << "<i>Unknown</i> ";
+          }
+          banner_result << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
+        }
+        // show bots
+        for (auto user_id = goals[colore].begin(); user_id != goals[colore].end() && (*user_id < 0); ++user_id) {
+          banner_result << "  " << std::to_string(++num) << ") " << color_text[colore] << " <i><b>"
+                        << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</b></i> " << ((real_win < 0) ? '-' : '+')
+                        << intToCoins(std::abs(real_win)) << '\n';
+        }
+      }
+    }
     std::lock_guard lg(tgbot_mutex);
-    std::string banner_result =
-        "<b><i>" + std::string(CASINO) + " Результаты</i></b>:\n\n <u>Победный цвет</u>: " + color_text[winner_color] + "\n\n";
-
-    appendToBanner(bot, group_id, banner_result, goals[winner_color], color_text[winner_color],
-                   "+" + intToCoins(win_amount));
-
-    std::string lost_amount = intToCoins(-own_bit);
-    for (auto color : voted_colors) {
-      if (color != winner_color) {
-        appendToBanner(bot, group_id, banner_result, goals[color], color_text[color], lost_amount);
-      }
-    }
-    banner_result = banner_result + "\n<i>Новая игра:</i> /newgame";
-    bot.getApi().sendMessage(group_id, banner_result, false, 0, nullptr, "HTML");
+    bot.getApi().sendMessage(group_id, banner_result.str(), true, 0, nullptr, "HTML");
   }
   return true;
 }
