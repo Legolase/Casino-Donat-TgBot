@@ -26,12 +26,18 @@ private:
   void load_data();
   void save_data();
 
+  Chat* getChatByRequest(GameRequest const& request);
+  Game* getGame(const GameRequest& request, Chat const& chat);
+
   std::map<int64_t, Game> current_games;
+  std::map<int64_t, Chat> chat_settings;
   std::thread worker;
   TgBot::Bot& bot;
+
+  Chat default_chat;
+  Game default_game;
 };
 
 static_assert(sizeof(GameManager) == 0);
-static_assert(sizeof(std::map<int64_t, std::pair<>>) == 0);
 
 #endif // CASINO_GAMEMANAGER_H

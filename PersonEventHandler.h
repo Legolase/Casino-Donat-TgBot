@@ -15,11 +15,8 @@ struct PersonRequest {
     Exit,
     Farm,
     GetBalance,
-    GetBots,
     Help,
     ReturnMoney,
-    SetBit,
-    SetBots,
     SpyBalance,
     last
   };
@@ -27,7 +24,7 @@ struct PersonRequest {
   PersonRequest(Type type, int64_t user_i, int64_t group_i = -1, int32_t message_i = -1, int64_t bt = -1,
                 int64_t user_t = -1, Color colo = Color::last) noexcept;
 
-  int64_t user_id_from;`
+  int64_t user_id_from;
   int64_t user_id_to;
   int64_t group_id;
   int64_t counter;

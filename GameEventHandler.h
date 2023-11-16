@@ -10,11 +10,23 @@
 #include "concurrent_queue.h"
 #include <memory>
 
+/*
+ Regist,        game
+ AddBit,        game
+ Exit,          -
+ GetSettings,   -
+ SetBots,       -
+ SetBitValue,   -
+ * */
+
 struct GameRequest {
   enum class Type : unsigned char {
     Regist,
     AddBit,
     Exit,
+    GetSettings,
+    SetBots,
+    SetBitValue,
     last
   };
 

@@ -6,6 +6,7 @@
 #define CASINO_GAME_H
 
 #include "Color.h"
+#include "Chat.h"
 #include "GameEventHandler.h"
 #include "Globals.h"
 #include "Time.h"
@@ -17,7 +18,7 @@
 struct Game {
   static constexpr int MAX_LIFETIME = 35;
 
-  explicit Game(int32_t ms_id, int64_t bt, int bots_in);
+  explicit Game(int32_t ms_id, Chat const&);
   Game(Game const&) = delete;
 
   bool update(TgBot::Bot& bot, int64_t group_id);

@@ -45,3 +45,13 @@ void Person::close_bit() noexcept {
 bool Person::has_active_bit() const noexcept {
   return active_bits;
 }
+
+std::ostream& operator<<(std::ostream& out, const Person& person) {
+  out << person.balance << ' ' << person.last_farm;
+  return out;
+}
+
+std::istream& operator>>(std::istream& in, Person& person) {
+  in >> person.balance >> person.last_farm;
+  return in;
+}

@@ -20,7 +20,7 @@ public:
   void start();
   void thread_main();
 
-  std::map<int64_t, Person>::iterator regist(int64_t id, std::map<int64_t, Person>::iterator);
+  std::map<int64_t, Person>::iterator regist(int64_t id);
 
 private:
   void load_data();

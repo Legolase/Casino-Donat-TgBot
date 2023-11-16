@@ -14,6 +14,8 @@ void GameManager::start() {
 }
 void GameManager::thread_main() {
   int sleep_;
+  load_data();
+
   while (true) {
     sleep_ = checkGames();
 
@@ -26,6 +28,7 @@ void GameManager::thread_main() {
 
     if (game_stream.is_closed() && game_stream.empty() && current_games.empty()) {
       std::cout << "Exit game_stream\n";
+      save_data();
       return;
     }
 
@@ -34,7 +37,18 @@ void GameManager::thread_main() {
     }
 
     GameRequest& request = **opt_request;
+
+    Chat& chat = *getChatByRequest(request);
+
     auto game = current_games.find(request.group_id);
+    Chat* bare_chat;
+
+    if (game == current_games.end()) {
+      auto chat_it = chat_settings.find(request.group_id);
+      if (chat_it == chat_settings.end()) {
+        bare_chat = &default_chat;
+      }
+    }
 
     if (request.type == GameRequest::Type::Exit) {
       std::cout << "Close game_stream\n";
@@ -114,4 +128,63 @@ int32_t GameManager::sendMessage(int64_t group_id, int64_t bt) {
 GameManager::~GameManager() {
   game_stream.close();
   worker.join();
+}
+
+void GameManager::save_data() {
+  std::ofstream out("chats.ini");
+  if (!out) {
+    std::cout << "Данные потеряны\n";
+    return;
+  }
+  out << chat_settings.size() << '\n';
+  for (auto const& elem : chat_settings) {
+    out << elem.first << ' ' << elem.second;
+  }
+}
+
+void GameManager::load_data() {
+  std::ifstream in("chats.ini");
+  if (!in) {
+    std::cout << "Нет данных для загрузки\n";
+    return;
+  }
+  int n;
+  in >> n;
+
+  int64_t id;
+  Chat ch;
+  for (int i = 0; i < n; ++i) {
+    in >> id >> ch;
+    chat_settings.emplace(id, ch);
+  }
+}
+
+Chat* GameManager::getChatByRequest(const GameRequest& request) {
+  decltype(chat_settings)::iterator chat_it;
+  if (request.type != GameRequest::Type::AddBit) {
+    chat_it = chat_settings.find(request.group_id);
+    if (request.type == GameRequest::Type::SetBots || request.type == GameRequest::Type::SetBitValue) {
+      if (chat_it == chat_settings.end()) {
+        chat_it = chat_settings.emplace(std::piecewise_construct, std::forward_as_tuple(request.group_id),
+                                        std::forward_as_tuple()).first;
+      }
+      return &(chat_it->second);
+    } else {
+      if (chat_it == chat_settings.end()) {
+        return &default_chat;
+      } else {
+        return &(chat_it->second);
+      }
+    }
+  }
+  return &default_chat;
+}
+Game* GameManager::getGame(const GameRequest& request, Chat const& chat) {
+  decltype(current_games)::iterator game_it;
+  if (request.type != GameRequest::Type::Regist && request.type != GameRequest::Type::AddBit) {
+    return &default_game;
+  }
+  if (request.type == GameRequest::Type::Regist) {
+    return current_games.emplace(request.id)
+  }
 }

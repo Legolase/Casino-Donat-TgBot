@@ -7,11 +7,14 @@
 
 #include "Globals.h"
 #include <cstdint>
+#include <istream>
+#include <ostream>
 
 struct Chat {
   Chat() noexcept = default;
-  Chat(Chat const&) = delete;
 
+  friend std::ostream& operator<<(std::ostream& out, Chat const& chat);
+  friend std::istream& operator>>(std::istream& in, Chat& chat);
 
 private:
   int64_t bit{MINIMUM_BIT};

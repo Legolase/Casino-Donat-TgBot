@@ -35,7 +35,7 @@ void PersonManager::thread_main() {
         bare_person = &default_user;
       }
       else {
-        user_it = regist(request.user_id_from, user_it);
+        user_it = regist(request.user_id_from);
         bare_person = &(user_it->second);
       }
     }
@@ -150,15 +150,13 @@ void PersonManager::load_data() {
     return;
   }
   int n;
-  int64_t id, balance, bt;
-  int last_farm, bot_num;
   in >> n;
 
-  std::map<int64_t, Person>::iterator it;
+  int64_t id;
+  Person p;
   for (int i = 0; i < n; ++i) {
-    in >> id >> balance >> last_farm;
-    registrated_users.emplace(std::piecewise_construct, std::forward_as_tuple(id),
-                              std::forward_as_tuple(balance, last_farm));
+    in >> id >> p;
+    registrated_users.emplace(id, p);
   }
 }
 
@@ -170,18 +168,11 @@ void PersonManager::save_data() {
   }
   out << registrated_users.size() << '\n';
   for (auto const& elem : registrated_users) {
-    out << elem.first << ' ' << elem.second.get_balance() << ' ' << elem.second.get_last_farm() << ' ' << '\n';
+    out << elem.first << ' ' << elem.second;
   }
 }
 
-std::map<int64_t, Person>::iterator PersonManager::regist(int64_t id, std::map<int64_t, Person>::iterator user) {
-  if (user != registrated_users.end()) {
-    std::cout << "Warning: вызван regist для зареганного юзера";
-    return user;
-  }
-  else {
-    //    auto pr = registrated_users.insert(std::make_pair(id, Person{}));
-    auto pr = registrated_users.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
-    return pr.first;
-  }
+std::map<int64_t, Person>::iterator PersonManager::regist(int64_t id) {
+  auto pr = registrated_users.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
+  return pr.first;
 }
