@@ -1,7 +1,9 @@
 #include "GameManager.h"
 #include "Globals.h"
 #include "PersonManager.h"
+#include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
@@ -22,24 +24,30 @@ void end(int s) {
 }
 
 void log(TgBot::Message::Ptr const& message) {
+  auto now = time(original_t{});
+  char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+  std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s/%s/%s/%li : %s\n", message->chat->title.c_str(), message->from->firstName.c_str(),
+    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, message->chat->title.c_str(), message->from->firstName.c_str(),
            message->from->username.c_str(), message->from->id, message->text.c_str());
   }
   else {
-    printf("PRIVATE/%s/%s/%li : %s\n", message->from->firstName.c_str(), message->from->username.c_str(), message->from->id,
-           message->text.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, message->from->firstName.c_str(), message->from->username.c_str(),
+           message->from->id, message->text.c_str());
   }
 }
 
 void log(TgBot::CallbackQuery::Ptr const& query) {
+  auto now = time(original_t{});
+  char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+  std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (query->message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s/%s/%s/%li : %s\n", query->message->chat->title.c_str(), query->from->firstName.c_str(),
+    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, query->message->chat->title.c_str(), query->from->firstName.c_str(),
            query->from->username.c_str(), query->from->id, query->data.c_str());
   }
   else {
-    printf("PRIVATE/%s/%s/%li : %s\n", query->from->firstName.c_str(), query->from->username.c_str(), query->from->id,
-           query->data.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, query->from->firstName.c_str(), query->from->username.c_str(),
+           query->from->id, query->data.c_str());
   }
 }
 
