@@ -24,9 +24,6 @@ struct GameRequest {
     Regist,
     AddBit,
     Exit,
-    GetSettings,
-    SetBots,
-    SetBitValue,
     last
   };
 
@@ -34,7 +31,7 @@ struct GameRequest {
                        Color colo = Color::last, uchar bts = 0) noexcept;
 
   int64_t user_id;
-  int64_t group_id;
+  int64_t chat_id;
   int64_t own_bit;
   int32_t message_id;
   Type type;

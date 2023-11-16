@@ -15,7 +15,6 @@ void PersonManager::start() {
 void PersonManager::thread_main() {
   load_data();
 
-  auto default_user = Person{};
   while (true) {
     auto opt_request = person_stream.pop();
 
@@ -26,112 +25,121 @@ void PersonManager::thread_main() {
     }
 
     PersonRequest& request = **opt_request;
-    Person* bare_person;
-
-    auto user_it = registrated_users.find(request.user_id_from);
-    if (user_it == registrated_users.end()) {
-      if (request.type == PersonRequest::Type::GetBalance || request.type == PersonRequest::Type::SpyBalance)
-      {
-        bare_person = &default_user;
-      }
-      else {
-        user_it = regist(request.user_id_from);
-        bare_person = &(user_it->second);
-      }
-    }
-    else {
-      bare_person = &(user_it->second);
-    }
-    Person& user_from = *bare_person;
-
-    user_it = registrated_users.find(request.user_id_to);
-    if (user_it == registrated_users.end()) {
-      bare_person = &default_user;
-    }
-    else {
-      bare_person = &(user_it->second);
-    }
-    Person& user_to = *bare_person;
+    Person* user_from = getPersonSubject(request);
+    Person* user_to = getPersonObject(request);
+    Chat* chat = getChat(request);
 
     if (request.type == PersonRequest::Type::Exit) {
       std::cout << "Close person_stream\n";
       person_stream.close();
     }
+    else if (request.type == PersonRequest::Type::GameRegist) {
+      game_stream.push(std::make_shared<GameRequest>(GameRequest::Type::Regist, -1, request.chat_id, request.message_id,
+                                                     chat->getBit(), Color::last, chat->getBots()));
+    }
     else if (request.type == PersonRequest::Type::ReturnMoney) {
-      user_from.close_bit();
-      user_from.shift_balance(request.counter);
+      user_from->close_bit();
+      user_from->shift_balance(request.counter);
     }
     else if (request.type == PersonRequest::Type::GetBalance) {
       std::lock_guard lg(tgbot_mutex);
-      bot.getApi().sendMessage(request.group_id,
-                               std::string("<b>") + SEARCH + "Ваш баланс:</b> " + intToCoins(user_from.get_balance()), false,
-                               request.message_id, nullptr, "HTML");
+      bot.getApi().sendMessage(request.chat_id,
+                               std::string("<b>") + SEARCH + "Ваш баланс:</b> " + intToCoins(user_from->get_balance()),
+                               false, request.message_id, nullptr, "HTML");
     }
     else if (request.type == PersonRequest::Type::SpyBalance) {
       std::lock_guard lg(tgbot_mutex);
-      bot.getApi().sendMessage(request.group_id,
-                               std::string("<b>") + SEARCH + "Баланс:</b> " + intToCoins(user_to.get_balance()), false,
+      bot.getApi().sendMessage(request.chat_id,
+                               std::string("<b>") + SEARCH + "Баланс:</b> " + intToCoins(user_to->get_balance()), false,
                                request.message_id, nullptr, "HTML");
     }
     else if (request.type == PersonRequest::Type::Farm) {
-      if (user_from.has_active_bit()) {
-        bot.getApi().sendMessage(request.group_id, std::string(WARN) + "Во время игры фармить нельзя", false,
+      if (user_from->has_active_bit()) {
+        bot.getApi().sendMessage(request.chat_id, std::string(WARN) + "Во время игры фармить нельзя", false,
                                  request.message_id);
       }
-      else if (user_from.can_farm()) {
-        user_from.update_farm();
-        user_from.shift_balance(FARM_AMOUNT);
-        bot.getApi().sendMessage(request.group_id, std::string(OK) + "На счёт зачислено: " + intToCoins(FARM_AMOUNT), false,
+      else if (user_from->can_farm()) {
+        user_from->update_farm();
+        user_from->shift_balance(FARM_AMOUNT);
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + "На счёт зачислено: " + intToCoins(FARM_AMOUNT), false,
                                  request.message_id);
       }
       else {
         std::lock_guard lg(tgbot_mutex);
-        bot.getApi().sendMessage(request.group_id,
+        bot.getApi().sendMessage(request.chat_id,
                                  std::string(WARN) + "Используй /farm:\n  1) не чаще " + intToTime(farm_time), false,
                                  request.message_id);
       }
     }
     else if (request.type == PersonRequest::Type::AddBit) {
-      if (!user_from.add_bit()) {
+      if (!user_from->add_bit()) {
         std::lock_guard lg(tgbot_mutex);
-        bot.getApi().sendMessage(request.group_id,
-                                 std::string(WARN) + getUserName(bot, request.group_id, request.user_id_from) +
-                                     ". Вы уже сделали ставку. Подождите)",
+        bot.getApi().sendMessage(request.chat_id,
+                                 std::string(WARN) + getUserName(bot, request.chat_id, request.user_id_from) +
+                                     ". Вы уже сделали максимальное кол-во ставок. Подождите)",
                                  false, 0, nullptr, "HTML");
       }
-      else if (!user_from.shift_balance(-request.counter)) {
-        user_from.close_bit();
+      else if (!user_from->shift_balance(-request.counter)) {
+        user_from->close_bit();
         const char* no_money = " Недостаточно средств для ставки. Используйте команду /farm";
         std::lock_guard lg(tgbot_mutex);
-        bot.getApi().sendMessage(request.group_id,
-                                 std::string(WARN) + getUserName(bot, request.group_id, request.user_id_from) +
-                                     + no_money,
+        bot.getApi().sendMessage(request.chat_id,
+                                 std::string(WARN) + getUserName(bot, request.chat_id, request.user_id_from) + +no_money,
                                  false, 0, nullptr, "HTML");
       }
       else {
-        game_stream.push(std::make_shared<GameRequest>(GameRequest::Type::AddBit, request.user_id_from, request.group_id,
+        game_stream.push(std::make_shared<GameRequest>(GameRequest::Type::AddBit, request.user_id_from, request.chat_id,
                                                        request.message_id, request.counter, request.color));
       }
     }
     else if (request.type == PersonRequest::Type::Help) {
       // check valid balance
-      if (!(user_from.shift_balance(-request.counter))) {
+      if (!(user_from->shift_balance(-request.counter))) {
         std::lock_guard lg(tgbot_mutex);
 
-        bot.getApi().sendMessage(request.group_id, std::string(FAIL) + " Недостаточно средств", false, request.message_id);
+        bot.getApi().sendMessage(request.chat_id, std::string(FAIL) + " Недостаточно средств", false, request.message_id);
         continue;
       }
 
       std::lock_guard lg(tgbot_mutex);
-      if (user_to.shift_balance(request.counter)) {
-        bot.getApi().sendMessage(request.group_id, std::string(OK) + " Успешный перевод: " + intToCoins(request.counter),
+      if (user_to->shift_balance(request.counter)) {
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + " Успешный перевод: " + intToCoins(request.counter),
                                  false, request.message_id);
       }
       else {
         bot.getApi().sendMessage(
-            request.group_id, "Ошибка!!! Не удалось зачислить деньги. @MetaTrigger, верните отправленную сумму отправителю",
+            request.chat_id, "Ошибка!!! Не удалось зачислить деньги. @MetaTrigger, верните отправленную сумму отправителю",
             false, request.message_id);
       }
+    }
+    else if (request.type == PersonRequest::Type::SetBot) {
+      std::lock_guard lg(tgbot_mutex);
+      if (chat->setBots(request.counter)) {
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + "Количество ботов успешно изменено " + BOT, false,
+                                 request.message_id, nullptr, "HTML");
+      }
+      else {
+        bot.getApi().sendMessage(request.chat_id,
+                                 std::string(WARN) + "Допустимое кол-во ботов: 0-" + std::to_string(max_bots) + BOT, false,
+                                 request.message_id, nullptr, "HTML");
+      }
+    }
+    else if (request.type == PersonRequest::Type::SetBit) {
+      std::lock_guard lg(tgbot_mutex);
+      if (chat->setBit(request.counter)) {
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + "Стоимость ставки в успешно изменена", false,
+                                 request.message_id);
+      }
+      else {
+        bot.getApi().sendMessage(request.chat_id, std::string(WARN) + "Минимальная ставка: " + intToCoins(MINIMUM_BIT),
+                                 false, request.message_id);
+      }
+    }
+    else if (request.type == PersonRequest::Type::GetBot) {
+      std::lock_guard lg(tgbot_mutex);
+      bot.getApi().sendMessage(
+          request.chat_id, std::string("<b>") + SEARCH + "Установлено ботов:</b> " + std::to_string(chat->getBots()) + BOT,
+          false, request.message_id, nullptr, "HTML");
     }
   }
 }
@@ -156,7 +164,7 @@ void PersonManager::load_data() {
   Person p;
   for (int i = 0; i < n; ++i) {
     in >> id >> p;
-    registrated_users.emplace(id, p);
+    registratedUsers.emplace(id, p);
   }
 }
 
@@ -166,13 +174,117 @@ void PersonManager::save_data() {
     std::cout << "Данные потеряны\n";
     return;
   }
-  out << registrated_users.size() << '\n';
-  for (auto const& elem : registrated_users) {
+  out << registratedUsers.size() << '\n';
+  for (auto const& elem : registratedUsers) {
     out << elem.first << ' ' << elem.second;
   }
 }
 
-std::map<int64_t, Person>::iterator PersonManager::regist(int64_t id) {
-  auto pr = registrated_users.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
+std::map<int64_t, Person>::iterator PersonManager::registUser(int64_t id) {
+  auto pr = registratedUsers.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
+  return pr.first;
+}
+
+/*
+    AddBit,       user_from   r
+    Exit,         -
+    Farm,         user_from   r
+    GameRegist,   -
+    GetBalance,   user_from   n
+    Help,         user_from   r
+    ReturnMoney,  user_from   r
+    SpyBalance,   -
+    SetBot,       -
+    SetBit,       -
+    GetBot        -
+*/
+Person* PersonManager::getPersonSubject(PersonRequest const& request) {
+  decltype(registratedUsers)::iterator user_it;
+
+  if (request.type == PersonRequest::Type::GameRegist || request.type == PersonRequest::Type::SpyBalance ||
+      request.type == PersonRequest::Type::SetBot || request.type == PersonRequest::Type::SetBit ||
+      request.type == PersonRequest::Type::GetBot)
+  {
+    return &default_person;
+  }
+
+  user_it = registratedUsers.find(request.user_id_from);
+  if (request.type == PersonRequest::Type::GetBalance) {
+    if (user_it == registratedUsers.end()) {
+      return &default_person;
+    }
+    else {
+      return &(user_it->second);
+    }
+  }
+
+  if (user_it == registratedUsers.end()) {
+    user_it = registUser(request.user_id_from);
+  }
+  return &(user_it->second);
+}
+/*
+    AddBit,       -
+    Exit,         -
+    Farm,         -
+    GameRegist,   -
+    GetBalance,   -
+    Help,         user_to   r
+    ReturnMoney,  -
+    SpyBalance,   user_to   n
+    SetBot,       -
+    SetBit,       -
+    GetBot        -
+*/
+Person* PersonManager::getPersonObject(const PersonRequest& request) {
+  decltype(registratedUsers)::iterator user_it;
+
+  if (request.type != PersonRequest::Type::Help && request.type != PersonRequest::Type::SpyBalance) {
+    return &default_person;
+  }
+  user_it = registratedUsers.find(request.user_id_to);
+  if (request.type == PersonRequest::Type::Help) {
+    if (user_it == registratedUsers.end()) {
+      user_it = registUser(request.user_id_to);
+    }
+    return &(user_it->second);
+  }
+
+  if (user_it == registratedUsers.end()) {
+    return &default_person;
+  }
+  return &(user_it->second);
+}
+/*
+  AddBit,       -
+  Exit,         -
+  Farm,         -
+  GameRegist,   chat r
+  GetBalance,   -
+  Help,         -
+  ReturnMoney,  chat r
+  SpyBalance,   -
+  SetBot        chat r
+  SetBit        chat r
+*/
+Chat* PersonManager::getChat(const PersonRequest& request) {
+  decltype(registratedChats)::iterator chat_it;
+
+  if (request.type != PersonRequest::Type::GameRegist && request.type != PersonRequest::Type::ReturnMoney &&
+      request.type != PersonRequest::Type::SetBot && request.type != PersonRequest::Type::SetBit &&
+      request.type != PersonRequest::Type::GetBot)
+  {
+    return nullptr;
+  }
+
+  chat_it = registratedChats.find(request.chat_id);
+  if (chat_it == registratedChats.end()) {
+    chat_it = registChat(request.chat_id);
+  }
+  return &(chat_it->second);
+}
+
+std::map<int64_t, Chat>::iterator PersonManager::registChat(int64_t id) {
+  auto pr = registratedChats.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple());
   return pr.first;
 }

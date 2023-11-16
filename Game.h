@@ -18,7 +18,7 @@
 struct Game {
   static constexpr int MAX_LIFETIME = 35;
 
-  explicit Game(int32_t ms_id, Chat const&);
+  explicit Game(int32_t ms_id, int64_t bt, int bots_in);
   Game(Game const&) = delete;
 
   bool update(TgBot::Bot& bot, int64_t group_id);

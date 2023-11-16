@@ -136,7 +136,7 @@ void addEventHandlers() {
   });
   bot.getEvents().onCommand("bots", [&](TgBot::Message::Ptr message) {
     if (NO_PROCESS) return;
-    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetBots, message->from->id, message->chat->id,
+    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetBot, message->from->id, message->chat->id,
                                                        message->messageId));
     log(message);
   });
@@ -231,7 +231,7 @@ void addEventHandlers() {
       stream << message->text;
       stream.ignore(100, ' ');
       if (stream >> val) {
-        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SetBots, message->from->id,
+        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SetBot, message->from->id,
                                                            message->chat->id, message->messageId, val));
       }
       else {

@@ -33,7 +33,7 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
   {
     std::lock_guard lg(tgbot_mutex);
     try {
-      //      bot.getApi().unpinChatMessage(group_id, message_id);
+      //      bot.getApi().unpinChatMessage(chat_id, message_id);
       for (auto const& mess : bit_message) {
         try {
           bot.getApi().deleteMessage(mess.first, mess.second);
@@ -102,9 +102,9 @@ void Game::addBit(TgBot::Bot& bot, const GameRequest& req) {
   std::lock_guard lg(tgbot_mutex);
   TgBot::Message::Ptr msg;
   try {
-    auto user = bot.getApi().getChatMember(req.group_id, req.user_id)->user;
+    auto user = bot.getApi().getChatMember(req.chat_id, req.user_id)->user;
     if (user->username.size() > 0) {
-      msg = bot.getApi().sendMessage(req.group_id, std::string("Ваша (@") + user->username + ") ставка принята.");
+      msg = bot.getApi().sendMessage(req.chat_id, std::string("Ваша (@") + user->username + ") ставка принята.");
     }
     else {
       TgBot::MessageEntity::Ptr entity(new TgBot::MessageEntity);
@@ -112,10 +112,10 @@ void Game::addBit(TgBot::Bot& bot, const GameRequest& req) {
       entity->user = user;
       entity->offset = 0;
       entity->length = 4;
-      msg = bot.getApi().sendMessage(req.group_id, "Ваша ставка принята.", false, 0, nullptr, "", false, {entity});
+      msg = bot.getApi().sendMessage(req.chat_id, "Ваша ставка принята.", false, 0, nullptr, "", false, {entity});
     }
   } catch (...) {
-    msg = bot.getApi().sendMessage(req.group_id, "<i>Unknown</i>. Ваша ставка принята.", false, 0, nullptr, "HTML");
+    msg = bot.getApi().sendMessage(req.chat_id, "<i>Unknown</i>. Ваша ставка принята.", false, 0, nullptr, "HTML");
   }
   bit_message.emplace_back(msg->chat->id, msg->messageId);
 }

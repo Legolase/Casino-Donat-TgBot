@@ -14,10 +14,14 @@ struct PersonRequest {
     AddBit,
     Exit,
     Farm,
+    GameRegist,
     GetBalance,
     Help,
     ReturnMoney,
     SpyBalance,
+    SetBot,
+    SetBit,
+    GetBot,
     last
   };
 
@@ -26,7 +30,7 @@ struct PersonRequest {
 
   int64_t user_id_from;
   int64_t user_id_to;
-  int64_t group_id;
+  int64_t chat_id;
   int64_t counter;
   int32_t message_id;
   Type type;
