@@ -1,0 +1,19 @@
+AllowShortBlocksOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: Empty
+BasedOnStyle: LLVM
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterStruct: false
+  AfterControlStatement: MultiLine
+  SplitEmptyFunction: true
+  BeforeElse: true
+ColumnLimit: 125
+DerivePointerAlignment: false
+Language: Cpp
+PointerAlignment: Left
+IndentAccessModifiers: false
