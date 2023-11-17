@@ -69,7 +69,7 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
       equal_colors.back().push_back(places[i]);
     }
     std::stringstream banner_result;
-    banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n\n";
+    banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n";
     char group_stage = -1;
     int64_t win, group_bits, real_win;
     double win_percent;
@@ -91,15 +91,15 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
       real_win = win - own_bit;
       if (group_stage == -1) {
         group_stage = (real_win > 0) ? 0 : ((real_win == 0) ? 1 : 2);
-        banner_result << str_stage[group_stage] << '\n';
+        banner_result << '\n' << str_stage[group_stage] << '\n';
       }
       else if (group_stage == 0 && real_win <= 0) {
         group_stage = (real_win == 0) ? 1 : 2;
-        banner_result << str_stage[group_stage] << '\n';
+        banner_result << '\n' << str_stage[group_stage] << '\n';
       }
       else if (group_stage < 2 && real_win < 0) {
         group_stage = 2;
-        banner_result << str_stage[group_stage] << '\n';
+        banner_result << '\n' << str_stage[group_stage] << '\n';
       }
       std::lock_guard lg(tgbot_mutex);
       for (auto const& colore : equal_colors[i]) {
@@ -107,17 +107,18 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
         for (auto user_id = goals[colore].lower_bound(0); user_id != goals[colore].end(); ++user_id) {
           person_stream.push(
               std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, *user_id, group_id, message_id, win));
-          banner_result << ' ' << color_text[colore] << ' ' << getUserName(bot, group_id, *user_id) << ' '
+          banner_result << "  " << color_text[colore] << ' ' << getUserName(bot, group_id, *user_id) << ' '
                         << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
         }
         // show bots
         for (auto user_id = goals[colore].begin(); user_id != goals[colore].end() && (*user_id < 0); ++user_id) {
-          banner_result << ' ' << color_text[colore] << " <i>"
+          banner_result << "  " << color_text[colore] << " <i>"
                         << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</i> " << ((real_win < 0) ? '-' : '+')
                         << intToCoins(std::abs(real_win)) << '\n';
         }
       }
     }
+    banner_result << "\n<i>Новая игра:</i> /newgame\n<i>Баланс:</i> /balance\n";
     std::lock_guard lg(tgbot_mutex);
     bot.getApi().sendMessage(group_id, banner_result.str(), true, 0, nullptr, "HTML");
   }
