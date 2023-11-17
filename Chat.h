@@ -6,6 +6,7 @@
 #define CASINO_CHAT_H
 
 #include "Globals.h"
+#include "Color.h"
 #include <cstdint>
 #include <istream>
 #include <ostream>
@@ -18,13 +19,15 @@ struct Chat {
 
   int64_t getBit() const noexcept;
   uchar getBots() const noexcept;
+  Color getColors() const noexcept;
 
   bool setBots(int bots) noexcept;
   bool setBit(int64_t val) noexcept;
+  bool setColors(int64_t colors) noexcept;
 private:
   int64_t bit{MINIMUM_BIT};
   uchar bot_count{DEFAULT_BOTS};
-//  uchar color_count{DEFAULT_COLORS};
+  Color color_count{DEFAULT_COLORS};
 };
 
 #endif // CASINO_CHAT_H

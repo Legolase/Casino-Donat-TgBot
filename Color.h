@@ -7,11 +7,11 @@
 
 enum class Color : unsigned char {
   Red,
-  Orange,
-  Yellow,
-  White,
   Green,
   Blue,
+  Black,
+  White,
+  Yellow,
   Purple,
   last
 };

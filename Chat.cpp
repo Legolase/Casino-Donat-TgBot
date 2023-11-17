@@ -5,7 +5,7 @@
 #include "Chat.h"
 
 std::ostream& operator<<(std::ostream& out, const Chat& chat) {
-  out << chat.bit << ' ' << static_cast<int>(chat.bot_count);// << ' ' << static_cast<int>(chat.color_count);
+  out << chat.bit << ' ' << static_cast<int>(chat.bot_count) << ' ' << static_cast<int>(chat.color_count);
   return out;
 }
 
@@ -13,8 +13,8 @@ std::istream& operator>>(std::istream& in, Chat& chat) {
   int i;
   in >> chat.bit >> i;
   chat.bot_count = static_cast<uchar>(i);
-//  in >> i;
-//  chat.color_count = static_cast<uchar>(i);
+  in >> i;
+  chat.color_count = static_cast<Color>(i);
   return in;
 }
 
@@ -37,5 +37,17 @@ bool Chat::setBit(int64_t val) noexcept {
     return false;
   }
   bit = val;
+  return true;
+}
+
+Color Chat::getColors() const noexcept {
+  return color_count;
+}
+
+bool Chat::setColors(int64_t colors) noexcept {
+  if (colors < MIN_COLORS || colors > MAX_COLORS) {
+    return false;
+  }
+  color_count = static_cast<Color>(colors);
   return true;
 }

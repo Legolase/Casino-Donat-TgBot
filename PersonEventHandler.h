@@ -22,7 +22,7 @@ struct PersonRequest {
     SetBot,
     SetBit,
     GetSettings,
-//    SetColor,
+    SetColor,
     last
   };
 

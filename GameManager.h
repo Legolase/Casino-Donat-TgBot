@@ -20,7 +20,7 @@ public:
   int checkGames();
 
   // returns message_id
-  int32_t sendMessage(int64_t group_id, int64_t bt);
+  int32_t sendMessage(int64_t group_id, int64_t bt, Color last);
 private:
 
   std::map<int64_t, Game> current_games;

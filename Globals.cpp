@@ -33,9 +33,9 @@ std::string getUserName(TgBot::Bot& bot, int64_t chat_id, int64_t user_id) noexc
   try {
     auto user = bot.getApi().getChatMember(chat_id, user_id)->user;
     if (user->username.empty()) {
-      return user->firstName;
+      return "<i><b>" + user->firstName + "</b></i>";
     } else {
-      return '@' + user->username;
+      return "<b>@" + user->username + "</b>";
     }
   } catch (...) {
     return "<u>Unknown</u>";

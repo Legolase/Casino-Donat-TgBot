@@ -37,7 +37,7 @@ void PersonManager::thread_main() {
     }
     else if (request.type == PersonRequest::Type::GameRegist) {
       game_stream.push(std::make_shared<GameRequest>(GameRequest::Type::Regist, -1, request.chat_id, request.message_id,
-                                                     chat->getBit(), Color::last, chat->getBots()));
+                                                     chat->getBit(), chat->getColors(), chat->getBots()));
     }
     else if (request.type == PersonRequest::Type::ReturnMoney) {
       user_from->close_bit();
@@ -141,8 +141,22 @@ void PersonManager::thread_main() {
       std::lock_guard lg(tgbot_mutex);
       bot.getApi().sendMessage(request.chat_id,
                                std::string("") + SEARCH + "\n<b>Установлено ботов:</b> " + std::to_string(chat->getBots()) +
-                                   BOT + "\n<b>Цена ставок:</b> " + intToCoins(chat->getBit()),
+                                   BOT + "\n<b>Цена ставок:</b> " + intToCoins(chat->getBit()) +
+                                   "\n<b>Кол-во цветов:</b> " + std::to_string(static_cast<int>(chat->getColors())),
                                false, request.message_id, nullptr, "HTML");
+    }
+    else if (request.type == PersonRequest::Type::SetColor) {
+      std::lock_guard lg(tgbot_mutex);
+      if (chat->setColors(request.counter)) {
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + " Кол-во цветов в успешно изменено", false,
+                                 request.message_id);
+      }
+      else {
+        bot.getApi().sendMessage(request.chat_id,
+                                 std::string(WARN) + " Допустимое кол-во цветов: " + std::to_string(MIN_COLORS) + '-' +
+                                     std::to_string(MAX_COLORS),
+                                 false, request.message_id);
+      }
     }
   }
 }
@@ -199,14 +213,16 @@ std::map<int64_t, Person>::iterator PersonManager::registUser(int64_t id) {
     SpyBalance,   -
     SetBot,       -
     SetBit,       -
-    GetSettings        -
+    GetSettings,  -
+    SetColor      -
 */
 Person* PersonManager::getPersonSubject(PersonRequest const& request) {
   decltype(registratedUsers)::iterator user_it;
 
   if (request.type == PersonRequest::Type::GameRegist || request.type == PersonRequest::Type::SpyBalance ||
       request.type == PersonRequest::Type::SetBot || request.type == PersonRequest::Type::SetBit ||
-      request.type == PersonRequest::Type::GetSettings || request.type == PersonRequest::Type::Exit)
+      request.type == PersonRequest::Type::GetSettings || request.type == PersonRequest::Type::Exit ||
+      request.type == PersonRequest::Type::SetColor)
   {
     return &default_person;
   }
@@ -237,7 +253,8 @@ Person* PersonManager::getPersonSubject(PersonRequest const& request) {
     SpyBalance,   user_to   n
     SetBot,       -
     SetBit,       -
-    GetSettings        -
+    GetSettings,  -
+    SetColor      -
 */
 Person* PersonManager::getPersonObject(const PersonRequest& request) {
   decltype(registratedUsers)::iterator user_it;
@@ -269,14 +286,15 @@ Person* PersonManager::getPersonObject(const PersonRequest& request) {
   SpyBalance,   -
   SetBot        chat r
   SetBit,       chat r
-  GetSettings        chat r
+  GetSettings,  chat r
+  SetColor      chat r
 */
 Chat* PersonManager::getChat(const PersonRequest& request) {
   decltype(registratedChats)::iterator chat_it;
 
   if (request.type != PersonRequest::Type::GameRegist && request.type != PersonRequest::Type::ReturnMoney &&
       request.type != PersonRequest::Type::SetBot && request.type != PersonRequest::Type::SetBit &&
-      request.type != PersonRequest::Type::GetSettings)
+      request.type != PersonRequest::Type::GetSettings && request.type != PersonRequest::Type::SetColor)
   {
     return nullptr;
   }

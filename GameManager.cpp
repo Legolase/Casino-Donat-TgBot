@@ -42,9 +42,9 @@ void GameManager::thread_main() {
     }
     else if (request.type == GameRequest::Type::Regist) {
       if (game == current_games.end()) {
-        current_games.emplace(
-            std::piecewise_construct, std::forward_as_tuple(request.chat_id),
-            std::forward_as_tuple(sendMessage(request.chat_id, request.own_bit), request.own_bit, request.bts_));
+        current_games.emplace(std::piecewise_construct, std::forward_as_tuple(request.chat_id),
+                              std::forward_as_tuple(sendMessage(request.chat_id, request.own_bit, request.color),
+                                                    request.own_bit, request.bts_, request.color));
         try {
           std::lock_guard lg(tgbot_mutex);
           bot.getApi().deleteMessage(request.chat_id, request.message_id);
@@ -88,11 +88,11 @@ int GameManager::checkGames() {
   return min;
 }
 
-int32_t GameManager::sendMessage(int64_t group_id, int64_t bt) {
+int32_t GameManager::sendMessage(int64_t group_id, int64_t bt, Color last) {
   TgBot::InlineKeyboardMarkup::Ptr keyboard(new TgBot::InlineKeyboardMarkup);
   std::vector<std::vector<TgBot::InlineKeyboardButton::Ptr>> buttons;
   buttons.emplace_back();
-  for (int i = 0; i < static_cast<int>(Color::last); ++i) {
+  for (int i = 0; i < static_cast<int>(last); ++i) {
     buttons.back().emplace_back(new TgBot::InlineKeyboardButton);
     buttons.back().back()->text = color_text[i];
     buttons.back().back()->callbackData = std::to_string(i) + " " + std::to_string(bt);

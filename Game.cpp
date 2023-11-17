@@ -48,10 +48,10 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
 
   if (bit_counter > 0) {
     for (int i = bit_counter; i <= bot_in; ++i) {
-      addBotBit(bot, static_cast<Color>(random(0, static_cast<int>(Color::last) - 1)));
+      addBotBit(static_cast<Color>(random(0, static_cast<int>(color_count) - 1)));
     }
 
-    std::vector<uchar> places(static_cast<int>(Color::last));
+    std::vector<uchar> places(static_cast<int>(color_count));
     for (int i = 0; i < places.size(); ++i) {
       places[i] = i;
     }
@@ -70,7 +70,6 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
     }
     std::stringstream banner_result;
     banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n\n";
-    int num = 0;
     char group_stage = -1;
     int64_t win, group_bits, real_win;
     double win_percent;
@@ -108,19 +107,13 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
         for (auto user_id = goals[colore].lower_bound(0); user_id != goals[colore].end(); ++user_id) {
           person_stream.push(
               std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, *user_id, group_id, message_id, win));
-          banner_result << "  " << ++num << ") " << color_text[colore] << ' ';
-          try {
-            auto user = bot.getApi().getChatMember(group_id, *user_id)->user;
-            banner_result << "<b>@" << user->username << "</b> ";
-          } catch (...) {
-            banner_result << "<i>Unknown</i> ";
-          }
-          banner_result << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
+          banner_result << ' ' << color_text[colore] << ' ' << getUserName(bot, group_id, *user_id) << ' '
+                        << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
         }
         // show bots
         for (auto user_id = goals[colore].begin(); user_id != goals[colore].end() && (*user_id < 0); ++user_id) {
-          banner_result << "  " << std::to_string(++num) << ") " << color_text[colore] << " <i><b>"
-                        << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</b></i> " << ((real_win < 0) ? '-' : '+')
+          banner_result << ' ' << color_text[colore] << " <i>"
+                        << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</i> " << ((real_win < 0) ? '-' : '+')
                         << intToCoins(std::abs(real_win)) << '\n';
         }
       }
@@ -133,33 +126,20 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
 int Game::lifetime() const noexcept {
   return time() - start_time;
 }
-Game::Game(int32_t ms_id, int64_t bt, int bots_in) : message_id(ms_id), own_bit(bt), bot_in(bots_in) {}
+Game::Game(int32_t ms_id, int64_t bt, int bots_in, Color last)
+    : goals(static_cast<int>(last)), own_bit(bt), message_id(ms_id), bot_in(bots_in), color_count(static_cast<uchar>(last)) {
+}
 
 void Game::addBit(TgBot::Bot& bot, const GameRequest& req) {
   goals[static_cast<uchar>(req.color)].insert(req.user_id);
   ++bit_counter;
   std::lock_guard lg(tgbot_mutex);
-  TgBot::Message::Ptr msg;
-  try {
-    auto user = bot.getApi().getChatMember(req.chat_id, req.user_id)->user;
-    if (user->username.size() > 0) {
-      msg = bot.getApi().sendMessage(req.chat_id, std::string("Ваша (@") + user->username + ") ставка принята.");
-    }
-    else {
-      TgBot::MessageEntity::Ptr entity(new TgBot::MessageEntity);
-      entity->type = TgBot::MessageEntity::Type::TextMention;
-      entity->user = user;
-      entity->offset = 0;
-      entity->length = 4;
-      msg = bot.getApi().sendMessage(req.chat_id, "Ваша ставка принята.", false, 0, nullptr, "", false, {entity});
-    }
-  } catch (...) {
-    msg = bot.getApi().sendMessage(req.chat_id, "<i>Unknown</i>. Ваша ставка принята.", false, 0, nullptr, "HTML");
-  }
+  auto msg = bot.getApi().sendMessage(req.chat_id, getUserName(bot, req.chat_id, req.user_id) + ". Ваша ставка принята",
+                                      false, 0, nullptr, "HTML");
   bit_message.emplace_back(msg->chat->id, msg->messageId);
 }
 
-void Game::addBotBit(TgBot::Bot& bot, Color col) {
+void Game::addBotBit(Color col) {
   auto& it = goals[static_cast<uchar>(col)];
   ++bit_counter;
   if (it.empty()) {

@@ -18,25 +18,26 @@
 struct Game {
   static constexpr int MAX_LIFETIME = 35;
 
-  explicit Game(int32_t ms_id, int64_t bt, int bots_in);
+  explicit Game(int32_t ms_id, int64_t bt, int bots_in, Color last);
   Game(Game const&) = delete;
 
   bool update(TgBot::Bot& bot, int64_t group_id);
 
   void addBit(TgBot::Bot& bot, GameRequest const& req);
 
-  void addBotBit(TgBot::Bot& bot, Color col);
+  void addBotBit(Color col);
 
   [[nodiscard]] int lifetime() const noexcept;
 private:
 
-  std::vector<std::set<int64_t>> goals{static_cast<int>(Color::last)};
+  std::vector<std::set<int64_t>> goals;
   std::vector<std::pair<int64_t, int32_t>> bit_message;
   int64_t const own_bit;
   int32_t const message_id;
   int bit_counter{0};
   int start_time{time()};
-  int const bot_in;
+  uchar const bot_in;
+  uchar const color_count;
 };
 
 #endif // CASINO_GAME_H

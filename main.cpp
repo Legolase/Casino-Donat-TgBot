@@ -88,9 +88,10 @@ void addEventHandlers() {
                                          "\n  3) /settings - настройки игры"
                                          "\n  4) /farm - фарм ") +
                                  COIN +
-                                 "\n  5) <code>.bit</code> - задать ставку для ваших игр"
-                                 "\n  6) <code>.bot</code> - задать ботов для ваших игр"
-                                 "\n  7) <code>.help</code> - перевести деньги игроку",
+                                 "\n  5) <code>.bit</code> - задать ставку"
+                                 "\n  6) <code>.bot</code> - задать ботов"
+                                 "\n  7) <code>.color</code> - задать кол-во цветов"
+                                 "\n  8) <code>.help</code> - перевести деньги игроку",
                              false, 0, nullptr, "HTML");
     log(message);
   });
@@ -226,7 +227,7 @@ void addEventHandlers() {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(message->chat->id,
                                  std::string(WARN) +
-                                     "Вы не указали стоимость ставки в Ваших играх.\nПример: \"<code>.bit 15</code>\"",
+                                     "Вы не указали стоимость ставки.\nПример: \"<code>.bit 15</code>\"",
                                  false, message->messageId, nullptr, "HTML");
       }
       log(message);
@@ -244,15 +245,29 @@ void addEventHandlers() {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(message->chat->id,
                                  std::string(WARN) +
-                                     "Вы не указали кол-во ботов в Ваших играх.\nПример: \"<code>.bot 3</code>\"",
+                                     "Вы не указали кол-во ботов.\nПример: \"<code>.bot 3</code>\"",
                                  false, message->messageId, nullptr, "HTML");
       }
       log(message);
     }
-//    else if (StringTools::startsWith(message->text, ".b")) {
-//      getBalance(message);
-//      log(message);
-//    }
+    else if (StringTools::startsWith(message->text, ".color")) {
+      std::stringstream stream;
+      int64_t val;
+      stream << message->text;
+      stream.ignore(100, ' ');
+      if (stream >> val) {
+        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SetColor, message->from->id,
+                                                           message->chat->id, message->messageId, val));
+      }
+      else {
+        std::lock_guard lg(tgbot_mutex);
+        bot.getApi().sendMessage(message->chat->id,
+                                 std::string(WARN) +
+                                     "Вы не указали кол-во ботов.\nПример: \"<code>.color 4</code>\"",
+                                 false, message->messageId, nullptr, "HTML");
+      }
+      log(message);
+    }
   });
 }
 
