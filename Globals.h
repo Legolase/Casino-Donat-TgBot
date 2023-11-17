@@ -14,7 +14,8 @@ using uchar = unsigned char;
 extern std::mutex tgbot_mutex;
 
 inline constexpr int64_t MINIMUM_BIT = 20;
-inline constexpr int64_t FARM_AMOUNT = MINIMUM_BIT * 3;
+inline constexpr int64_t MAX_FARM_AMOUNT = MINIMUM_BIT * 3;
+inline constexpr int64_t MIN_FARM_AMOUNT = MAX_FARM_AMOUNT * 0.30;
 inline constexpr int DEFAULT_BOTS = 4;
 inline constexpr int MIN_COLORS = 3;
 inline constexpr int DEFAULT_COLORS = 5;

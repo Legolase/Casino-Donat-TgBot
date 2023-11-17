@@ -5,6 +5,7 @@
 #include "PersonManager.h"
 #include "GameEventHandler.h"
 #include "Globals.h"
+#include "rand.h"
 #include <fstream>
 #include <string>
 
@@ -62,8 +63,9 @@ void PersonManager::thread_main() {
       }
       else if (user_from->can_farm()) {
         user_from->update_farm();
-        user_from->shift_balance(FARM_AMOUNT);
-        bot.getApi().sendMessage(request.chat_id, std::string(OK) + "На счёт зачислено: " + intToCoins(FARM_AMOUNT), false,
+        auto farm_amount = random(MIN_FARM_AMOUNT, MAX_FARM_AMOUNT);
+        user_from->shift_balance(farm_amount);
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + "На счёт зачислено: " + intToCoins(farm_amount), false,
                                  request.message_id);
       }
       else {
@@ -141,8 +143,8 @@ void PersonManager::thread_main() {
       std::lock_guard lg(tgbot_mutex);
       bot.getApi().sendMessage(request.chat_id,
                                std::string("") + SEARCH + "\n<b>Установлено ботов:</b> " + std::to_string(chat->getBots()) +
-                                   BOT + "\n<b>Цена ставок:</b> " + intToCoins(chat->getBit()) +
-                                   "\n<b>Кол-во цветов:</b> " + std::to_string(static_cast<int>(chat->getColors())),
+                                   BOT + "\n<b>Цена ставок:</b> " + intToCoins(chat->getBit()) + "\n<b>Кол-во цветов:</b> " +
+                                   std::to_string(static_cast<int>(chat->getColors())),
                                false, request.message_id, nullptr, "HTML");
     }
     else if (request.type == PersonRequest::Type::SetColor) {

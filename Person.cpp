@@ -16,7 +16,8 @@ bool Person::shift_balance(int64_t delta) noexcept {
   balance += delta;
   return true;
 }
-bool Person::can_farm() noexcept {
+
+bool Person::can_farm() const noexcept {
   return time() - last_farm >= farm_time /* && balance < MINIMUM_BIT*/;
 }
 

@@ -18,7 +18,7 @@ struct Person {
   int64_t get_balance() const noexcept;
   bool shift_balance(int64_t delta) noexcept;
 
-  bool can_farm() noexcept;
+  bool can_farm() const noexcept;
   void update_farm() noexcept;
 
   bool add_bit() noexcept;
@@ -29,7 +29,7 @@ struct Person {
   friend std::istream& operator>>(std::istream& in, Person& person);
 
 private:
-  int64_t balance{FARM_AMOUNT};
+  int64_t balance{MAX_FARM_AMOUNT};
   int last_farm{0};
   uchar active_bits{0};
 };
