@@ -11,7 +11,7 @@
 #define NO_PROCESS 0
 
 TgBot::Bot bot("6653170160:AAHoOvyhZw10GihbNrjKfvq7LXPwGXPEzqU");
-//TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
+// TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
 PersonManager person_manager(bot);
 GameManager game_manager(bot);
 
@@ -69,13 +69,14 @@ void addEventHandlers() {
     bot.getApi().sendMessage(
         message->chat->id,
         "<b>Привет, " + message->from->firstName +
-            "!</b> Я рад приветствовать тебя в мире развлечений и азарта! Я здесь, чтобы сделать твоё время с нами "
-            "незабываемым и захватывающим. Важно отметить, что для моего использования не требуются реальные "
+            "!</b> Я рад приветствовать тебя в Donat-Casino! Я здесь, чтобы дать тебе и твоим друзьям поиграть в абсолютно "
+            "безобидное казино. Важно отметить, что для моего использования не требуются реальные "
             "деньги!\n\nИгровая валюта " +
             COIN +
-            "\n\nИнструкция по установке: /setup"
+            "\n\nИнформация обо мне: t.me/MetaDonat_news"
+            "\nИнструкция по установке: /setup"
             "\nПосмотреть список команд: /list",
-        false, 0, nullptr, "HTML");
+        true, 0, nullptr, "HTML");
     log(message);
   });
   bot.getEvents().onCommand("list", [&](TgBot::Message::Ptr message) {
@@ -143,8 +144,8 @@ void addEventHandlers() {
   });
   bot.getEvents().onCommand("settings", [&](TgBot::Message::Ptr message) {
     if (NO_PROCESS) return;
-    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetSettings, message->from->id, message->chat->id,
-                                                       message->messageId));
+    person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::GetSettings, message->from->id,
+                                                       message->chat->id, message->messageId));
     log(message);
   });
   bot.getEvents().onCallbackQuery([&](TgBot::CallbackQuery::Ptr const query) {
@@ -226,8 +227,7 @@ void addEventHandlers() {
       else {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(message->chat->id,
-                                 std::string(WARN) +
-                                     "Вы не указали стоимость ставки.\nПример: \"<code>.bit 15</code>\"",
+                                 std::string(WARN) + "Вы не указали стоимость ставки.\nПример: \"<code>.bit 15</code>\"",
                                  false, message->messageId, nullptr, "HTML");
       }
       log(message);
@@ -238,15 +238,14 @@ void addEventHandlers() {
       stream << message->text;
       stream.ignore(100, ' ');
       if (stream >> val) {
-        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SetBot, message->from->id,
-                                                           message->chat->id, message->messageId, val));
+        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::SetBot, message->from->id, message->chat->id,
+                                                           message->messageId, val));
       }
       else {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(message->chat->id,
-                                 std::string(WARN) +
-                                     "Вы не указали кол-во ботов.\nПример: \"<code>.bot 3</code>\"",
-                                 false, message->messageId, nullptr, "HTML");
+                                 std::string(WARN) + "Вы не указали кол-во ботов.\nПример: \"<code>.bot 3</code>\"", false,
+                                 message->messageId, nullptr, "HTML");
       }
       log(message);
     }
@@ -262,9 +261,8 @@ void addEventHandlers() {
       else {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(message->chat->id,
-                                 std::string(WARN) +
-                                     "Вы не указали кол-во ботов.\nПример: \"<code>.color 4</code>\"",
-                                 false, message->messageId, nullptr, "HTML");
+                                 std::string(WARN) + "Вы не указали кол-во ботов.\nПример: \"<code>.color 4</code>\"", false,
+                                 message->messageId, nullptr, "HTML");
       }
       log(message);
     }
