@@ -64,6 +64,10 @@ void GameManager::thread_main() {
       if (game == current_games.end()) {
         person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, request.user_id,
                                                            request.chat_id, -1, request.own_bit));
+        try {
+          bot.getApi().deleteMessage(request.chat_id, request.message_id);
+        } catch (...) {
+        }
       }
       else {
         game->second.addBit(bot, request);
