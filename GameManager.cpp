@@ -103,14 +103,14 @@ int32_t GameManager::sendMessage(int64_t group_id, int64_t bt, Color last) {
   }
   keyboard->inlineKeyboard = std::move(buttons);
   std::lock_guard lg(tgbot_mutex);
-  int32_t messageId =
-      bot.getApi()
-          .sendMessage(group_id,
-                       std::string("<b><i>Игра начинается.</i></b>\n\nВыбери выигрышный цвет.\nЦена ставки: <b>" +
-                                   intToCoins(bt) + "</b>.\nВремя принятия ставок: ") +
-                           intToTime(Game::MAX_LIFETIME),
-                       false, 0, keyboard, "HTML", true)
-          ->messageId;
+  int32_t messageId = bot.getApi()
+                          .sendMessage(group_id,
+                                       "<b><i>Игра начинается.</i></b>\n\n"
+                                       "Выбери <a href=\"https://t.me/MetaDonat_news/6\">выигрышный цвет</a>.\n"
+                                       "Цена ставки: <b>" + intToCoins(bt) + "</b>\n"
+                                       "Время принятия ставок: " + intToTime(Game::MAX_LIFETIME),
+                                       true, 0, keyboard, "HTML", true)
+                          ->messageId;
   //  bot.getApi().pinChatMessage(chat_id, messageId);
   return messageId;
 }

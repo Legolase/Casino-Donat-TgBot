@@ -71,8 +71,9 @@ void PersonManager::thread_main() {
       else {
         std::lock_guard lg(tgbot_mutex);
         bot.getApi().sendMessage(request.chat_id,
-                                 std::string(WARN) + "Используй /farm:\n  1) не чаще " + intToTime(farm_time), false,
-                                 request.message_id);
+                                 std::string(WARN) + "Подождите, команда /farm станет Вам доступна через:\n" +
+                                     intToTime(user_from->next_farm()),
+                                 false, request.message_id);
       }
     }
     else if (request.type == PersonRequest::Type::AddBit) {
@@ -160,6 +161,20 @@ void PersonManager::thread_main() {
                                  false, request.message_id);
       }
     }
+    else if (request.type == PersonRequest::Type::HackBalance) {
+      std::lock_guard lg(tgbot_mutex);
+      if (request.counter <= 0) {
+        bot.getApi().sendMessage(request.chat_id, std::string(WARN) + " Упс. Значение отрицательное", false,
+                                 request.message_id);
+      }
+      else if (user_from->shift_balance(request.counter)) {
+        bot.getApi().sendMessage(request.chat_id, std::string(OK) + " Проверяй: /balance " + SHHH, false,
+                                 request.message_id);
+      }
+      else {
+        bot.getApi().sendMessage(request.chat_id, std::string(FAIL) + " Что-то пошло не так", false, request.message_id);
+      }
+    }
   }
 }
 
@@ -216,7 +231,8 @@ std::map<int64_t, Person>::iterator PersonManager::registUser(int64_t id) {
     SetBot,       -
     SetBit,       -
     GetSettings,  -
-    SetColor      -
+    SetColor,     -
+    HackBalance   user_from   r
 */
 Person* PersonManager::getPersonSubject(PersonRequest const& request) {
   decltype(registratedUsers)::iterator user_it;
@@ -256,7 +272,8 @@ Person* PersonManager::getPersonSubject(PersonRequest const& request) {
     SetBot,       -
     SetBit,       -
     GetSettings,  -
-    SetColor      -
+    SetColor,     -
+    HackBalance   -
 */
 Person* PersonManager::getPersonObject(const PersonRequest& request) {
   decltype(registratedUsers)::iterator user_it;
@@ -289,7 +306,8 @@ Person* PersonManager::getPersonObject(const PersonRequest& request) {
   SetBot        chat r
   SetBit,       chat r
   GetSettings,  chat r
-  SetColor      chat r
+  SetColor,     chat r
+  HackBalance   -
 */
 Chat* PersonManager::getChat(const PersonRequest& request) {
   decltype(registratedChats)::iterator chat_it;

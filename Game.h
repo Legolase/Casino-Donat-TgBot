@@ -40,4 +40,6 @@ private:
   uchar const color_count;
 };
 
+double multiplier() noexcept;
+
 #endif // CASINO_GAME_H

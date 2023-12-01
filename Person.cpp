@@ -10,7 +10,7 @@ int64_t Person::get_balance() const noexcept {
   return balance;
 }
 bool Person::shift_balance(int64_t delta) noexcept {
-  if (balance + delta < 0) {
+  if (balance + delta < 0 || balance + delta > MAX_BALANCE) {
     return false;
   }
   balance += delta;
@@ -51,4 +51,8 @@ std::ostream& operator<<(std::ostream& out, const Person& person) {
 std::istream& operator>>(std::istream& in, Person& person) {
   in >> person.balance >> person.last_farm;
   return in;
+}
+int Person::next_farm() const noexcept {
+  int result = farm_time - time() + last_farm;
+  return (result >= 0) ? result : 0;
 }

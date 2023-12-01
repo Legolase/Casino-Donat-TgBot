@@ -19,6 +19,7 @@ struct Person {
   bool shift_balance(int64_t delta) noexcept;
 
   bool can_farm() const noexcept;
+  int next_farm() const noexcept;
   void update_farm() noexcept;
 
   bool add_bit() noexcept;

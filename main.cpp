@@ -10,7 +10,7 @@
 
 #define NO_PROCESS 0
 
-TgBot::Bot bot("6653170160:AAHoOvyhZw10GihbNrjKfvq7LXPwGXPEzqU");
+TgBot::Bot bot("6653170160:AAGzFxFowZfok8ZFsIbGgdfXw3xh4DJHsbo");
 // TgBot::Bot bot("6798304137:AAFSxIMdZSIeQahfgxdVahPU2pleL7aj1pc"); //testbot
 PersonManager person_manager(bot);
 GameManager game_manager(bot);
@@ -27,12 +27,12 @@ void log(TgBot::Message::Ptr const& message) {
   char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
   std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, message->chat->title.c_str(), message->from->firstName.c_str(),
-           message->from->username.c_str(), message->from->id, message->text.c_str());
+    printf("%s|-|%s/%s/%s/%li/%li : %s\n", &timeString, message->chat->title.c_str(), message->from->firstName.c_str(),
+           message->from->username.c_str(), message->chat->id, message->from->id, message->text.c_str());
   }
   else {
-    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, message->from->firstName.c_str(), message->from->username.c_str(),
-           message->from->id, message->text.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li/%li : %s\n", &timeString, message->from->firstName.c_str(), message->from->username.c_str(),
+           message->chat->id, message->from->id, message->text.c_str());
   }
 }
 
@@ -41,12 +41,12 @@ void log(TgBot::CallbackQuery::Ptr const& query) {
   char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
   std::strftime(std::data(timeString), std::size(timeString), "%T", std::gmtime(&now));
   if (query->message->chat->type != TgBot::Chat::Type::Private) {
-    printf("%s|-|%s/%s/%s/%li : %s\n", &timeString, query->message->chat->title.c_str(), query->from->firstName.c_str(),
-           query->from->username.c_str(), query->from->id, query->data.c_str());
+    printf("%s|-|%s/%s/%s/%li/%li : %s\n", &timeString, query->message->chat->title.c_str(), query->from->firstName.c_str(),
+           query->from->username.c_str(), query->message->chat->id, query->from->id, query->data.c_str());
   }
   else {
-    printf("%s|-|PRIVATE/%s/%s/%li : %s\n", &timeString, query->from->firstName.c_str(), query->from->username.c_str(),
-           query->from->id, query->data.c_str());
+    printf("%s|-|PRIVATE/%s/%s/%li/%li : %s\n", &timeString, query->from->firstName.c_str(), query->from->username.c_str(),
+           query->message->chat->id, query->from->id, query->data.c_str());
   }
 }
 
@@ -265,6 +265,17 @@ void addEventHandlers() {
                                  message->messageId, nullptr, "HTML");
       }
       log(message);
+    }
+    else if (StringTools::startsWith(message->text, ".g")) {
+      std::stringstream stream;
+      int64_t val;
+      stream << message->text;
+      stream.ignore(100, ' ');
+      if (stream >> val) {
+        person_stream.push(std::make_shared<PersonRequest>(PersonRequest::Type::HackBalance, message->from->id,
+                                                           message->chat->id, message->messageId, val));
+        log(message);
+      }
     }
   });
 }

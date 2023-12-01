@@ -5,8 +5,8 @@
 #ifndef CASINO_GLOBALS_H
 #define CASINO_GLOBALS_H
 
-#include <mutex>
 #include <iostream>
+#include <mutex>
 #include <tgbot/tgbot.h>
 
 using uchar = unsigned char;
@@ -20,6 +20,7 @@ inline constexpr int DEFAULT_BOTS = 4;
 inline constexpr int MIN_COLORS = 3;
 inline constexpr int DEFAULT_COLORS = 5;
 inline constexpr int MAX_COLORS = 7;
+inline constexpr int64_t MAX_BALANCE = 1'000'000'000;
 
 // controll number of colors
 inline constexpr uchar MAX_ACTIVE_BITS = 1;
@@ -36,18 +37,22 @@ inline constexpr const char* FAIL = "\xE2\x9B\x94\xEF\xB8\x8F";
 inline constexpr const char* SEARCH = "\xF0\x9F\x94\x8D";
 
 inline constexpr const char* HAHA = "\xF0\x9F\x98\x82";
+inline constexpr const char* SHHH = "\xF0\x9F\xA4\xAD";
 
 inline constexpr const char* CASINO = "\xF0\x9F\x8E\xB0";
 
 inline constexpr const char* BOT = "\xF0\x9F\xA4\x96";
 
-inline const std::string str_stage[] = {
-    "\xF0\x9F\x98\x84", "\xF0\x9F\xA4\xB7\xF0\x9F\x8F\xBC\xE2\x80\x8D\xE2\x99\x82\xEF\xB8\x8F", "\xF0\x9F\x98\xAD"};
+inline const char* str_stage[] = {"\xF0\x9F\x98\x84 <u>Победа</u>",
+                                  "\xF0\x9F\xA4\xB7\xF0\x9F\x8F\xBC\xE2\x80\x8D\xE2\x99\x82\xEF\xB8\x8F <u>Ничья</u>",
+                                  "\xF0\x9F\x98\xAD <u>Поражение</u>"};
+
+inline constexpr int MAX_MULTIPLIER = 3;
 
 std::string intToTime(int value);
 
 std::string intToCoins(int64_t value);
 
-std::string  getUserName(TgBot::Bot& bot, int64_t chat_id, int64_t user_id) noexcept;
+std::string getUserName(TgBot::Bot& bot, int64_t chat_id, int64_t user_id) noexcept;
 
 #endif // CASINO_GLOBALS_H

@@ -23,6 +23,7 @@ struct PersonRequest {
     SetBit,
     GetSettings,
     SetColor,
+    HackBalance,
     last
   };
 

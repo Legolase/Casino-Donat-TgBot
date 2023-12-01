@@ -9,6 +9,7 @@
 #include "rand.h"
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include <sstream>
 #include <string>
 
@@ -69,7 +70,9 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
       equal_colors.back().push_back(places[i]);
     }
     std::stringstream banner_result;
-    banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n";
+    double const win_multiplier = multiplier();
+    banner_result << "<b><i>" << CASINO << " Результаты</i></b>:\n\n<i>Множитель</i>: <b><i>" << std::setprecision(2)
+                  << win_multiplier << "x</i></b> \xE2\x9C\xA8\n";
     char group_stage = -1;
     int64_t win, group_bits, real_win;
     double win_percent;
@@ -80,6 +83,9 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
         win_percent = static_cast<double>(goals[equal_colors[j][0]].size()) /
                       (goals[equal_colors[i][0]].size() + goals[equal_colors[j][0]].size());
         win = (win_percent * (group_bits * own_bit)) / (equal_colors[i].size() * goals[equal_colors[i][0]].size());
+        if (win > own_bit) {
+          win = (win - own_bit) * win_multiplier + own_bit;
+        }
       }
       else {
         win = own_bit;
@@ -107,14 +113,13 @@ bool Game::update(TgBot::Bot& bot, int64_t group_id) {
         for (auto user_id = goals[colore].lower_bound(0); user_id != goals[colore].end(); ++user_id) {
           person_stream.push(
               std::make_shared<PersonRequest>(PersonRequest::Type::ReturnMoney, *user_id, group_id, message_id, win));
-          banner_result << "  " << color_text[colore] << ' ' << getUserName(bot, group_id, *user_id) << ' '
+          banner_result << color_text[colore] << ' ' << getUserName(bot, group_id, *user_id) << ' '
                         << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
         }
         // show bots
         for (auto user_id = goals[colore].begin(); user_id != goals[colore].end() && (*user_id < 0); ++user_id) {
-          banner_result << "  " << color_text[colore] << " <i>"
-                        << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</i> " << ((real_win < 0) ? '-' : '+')
-                        << intToCoins(std::abs(real_win)) << '\n';
+          banner_result << color_text[colore] << " <i>" << NAMES[random(0, NAMES_SIZE - 1)] << BOT << "</i> "
+                        << ((real_win < 0) ? '-' : '+') << intToCoins(std::abs(real_win)) << '\n';
         }
       }
     }
@@ -148,4 +153,10 @@ void Game::addBotBit(Color col) {
     return;
   }
   it.insert(-static_cast<int64_t>(it.size() + 1));
+}
+
+static_assert(MAX_MULTIPLIER > 1);
+
+double multiplier() noexcept {
+  return (MAX_MULTIPLIER - 1) * std::pow(random(1, 100) / 100.0, 6) + 1;
 }
